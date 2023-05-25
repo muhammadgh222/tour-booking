@@ -20,10 +20,17 @@
   },
   "homepage": "https://github.com/muhammadgh222/tour-booking#readme",
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
-    "mongoose": "^7.2.0"
+    "jsonwebtoken": "^9.0.0",
+    "mongoose": "^7.2.0",
+    "passport": "^0.6.0",
+    "passport-jwt": "^4.0.1",
+    "passport-local": "^1.0.0",
+    "validator": "^13.9.0"
   },
   "devDependencies": {
     "morgan": "^1.10.0",
