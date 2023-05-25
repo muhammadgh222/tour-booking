@@ -7,16 +7,14 @@ const JwtStrategy = passportJwt.Strategy;
 const ExtractJwt = passportJwt.ExtractJwt;
 
 const options = {
-  jwtFromRequest: (req) =>
-    req.cookies.jwt
-      ? req.cookies.jwt
-      : ExtractJwt.fromAuthHeaderAsBearerToken(),
+  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
   secretOrKey: process.env.JWT_SECRET,
 };
 
 export default (passport) => {
   passport.use(
     new JwtStrategy(options, function (jwt_payload, done) {
+      console.log(Date.now() > jwt_payload.exp);
       User.findById(jwt_payload.sub)
         .then((user) => {
           if (user) {
