@@ -2,8 +2,9 @@ import express from "express";
 import cors from "cors";
 import passport from "passport";
 import cookieParser from "cookie-parser";
-import myPassport from "./config/passport.js";
+import myPassport, { googleAuth } from "./config/passport.js";
 myPassport(passport);
+googleAuth();
 // Development dependencies
 import morgan from "morgan";
 
@@ -21,6 +22,11 @@ app.use(passport.initialize());
 
 app.use("/api/v1/auth", authRoutes);
 
+app.get("/hi", (req, res) => {
+  res.send({
+    message: "Hello",
+  });
+});
 app.get("/", passport.authenticate("jwt", { session: false }), (req, res) => {
   res.send({
     message: "Hello",

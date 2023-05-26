@@ -15,11 +15,9 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true,
   },
   passwordConfirm: {
     type: String,
-    required: true,
     validate: {
       validator: function (el) {
         return el === this.password;
@@ -27,9 +25,15 @@ const userSchema = new mongoose.Schema({
       message: "Password does NOT match",
     },
   },
+  googleID: {
+    type: String,
+  },
 });
 
 userSchema.pre("save", async function (next) {
+  if (this.password === null) {
+    next();
+  }
   if (!this.isModified("password")) return next();
 
   this.password = await bcrypt.hash(this.password, 12);
