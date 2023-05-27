@@ -16,6 +16,7 @@ const options = {
 export default (passport) => {
   passport.use(
     new JwtStrategy(options, function (jwt_payload, done) {
+      console.log(jwt_payload);
       User.findById(jwt_payload.sub)
         .then((user) => {
           if (user) {
@@ -41,6 +42,7 @@ export const googleAuth = () => {
           callbackURL: "/api/v1/auth/google/redirect",
         },
         (accessToken, refreshToken, profile, done) => {
+          console.log(accessToken, refreshToken);
           User.findOne({ email: profile._json.email })
             .then((user) => {
               if (user) {

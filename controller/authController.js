@@ -91,7 +91,6 @@ export const login = async (req, res, next) => {
 export const refresh = (req, res, next) => {
   const cookies = req.cookies;
 
-  console.log();
   if (!cookies?.jwt) return res.status(401).json({ message: "Unauthorized" });
   const refreshToken = cookies.jwt;
   jwt.verify(
