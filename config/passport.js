@@ -8,15 +8,22 @@ dotenv.config();
 const JwtStrategy = passportJwt.Strategy;
 const ExtractJwt = passportJwt.ExtractJwt;
 
+const cookieExtractor = (req) => {
+  let token = null;
+  if (req && req.cookies) {
+    token = req.cookies["jwt"];
+  }
+  console.log(token);
+  return token;
+};
 const options = {
-  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-  secretOrKey: process.env.JWT_SECRET,
+  jwtFromRequest: cookieExtractor,
+  secretOrKey: process.env.JWT_REFRESH_SECRET,
 };
 
 export default (passport) => {
   passport.use(
     new JwtStrategy(options, function (jwt_payload, done) {
-      console.log(jwt_payload);
       User.findById(jwt_payload.sub)
         .then((user) => {
           if (user) {
@@ -41,8 +48,7 @@ export const googleAuth = () => {
           clientSecret: process.env.GOOGLE_CLIENT_SECRET,
           callbackURL: "/api/v1/auth/google/redirect",
         },
-        (accessToken, refreshToken, profile, done) => {
-          console.log(accessToken, refreshToken);
+        (accessToken, refreshToken, params, profile, done) => {
           User.findOne({ email: profile._json.email })
             .then((user) => {
               if (user) {

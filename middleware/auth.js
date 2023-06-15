@@ -1,6 +1,6 @@
 import passport from "passport";
 import localStrategy from "passport-local";
-import User from "../models/userModel";
+import User from "../models/userModel.js";
 
 passport.use(
   "local",
@@ -51,3 +51,29 @@ passport.use(
     }
   )
 );
+
+export const checkAuth = async (req, res, next) => {
+  let token;
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
+  } else if (req.cookies.jwt) {
+    token = req.cookies.jwt;
+  }
+
+  console.log("hi", token);
+
+  if (!token) {
+    return res.status(401).json({
+      message: "Not authorized",
+    });
+  }
+
+  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  const currentUser = await User.findById(decoded.id);
+
+  req.user = currentUser;
+  next();
+};

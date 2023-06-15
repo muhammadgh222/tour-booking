@@ -24,6 +24,8 @@ router.get(
   passport.authenticate("google", {
     scope: ["profile", "email"],
     session: false,
+    accessType: "offline",
+    prompt: "consent",
   }),
   (req, res) => {
     const accessTokenObj = issueJwt(req.user);
@@ -35,16 +37,16 @@ router.get(
     const refreshTokenObj = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
       expiresIn: process.env.JWT_EXPIRY,
     });
-
-    res.cookie("jwt-google", refreshTokenObj, {
+    console.log(refreshTokenObj);
+    res.cookie("jwt", refreshTokenObj, {
       expiresIn: new Date(
         Date.now() + process.env.JWT_EXPIRY * 24 * 60 * 60 * 1000
       ),
       httpOnly: true,
     });
-    res.send({
-      accessTokenObj,
-    });
+
+    res.redirect(`/dashboard`);
   }
 );
+
 export default router;
