@@ -10,10 +10,13 @@ const ExtractJwt = passportJwt.ExtractJwt;
 
 const cookieExtractor = (req) => {
   let token = null;
-  if (req && req.cookies) {
+  if (req.cookies["jwt"]) {
     token = req.cookies["jwt"];
+  } else if (req.headers.authorization || req.headers.Authorization) {
+    token = req.headers.authorization
+      ? req.headers.authorization.split(" ")[1]
+      : req.headers.Authorization.split(" ")[1];
   }
-  console.log(token);
   return token;
 };
 const options = {

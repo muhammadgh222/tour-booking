@@ -1,7 +1,9 @@
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 
 import User from "../models/userModel.js";
 import issueJwt from "../utils/issueJwt.js";
+import sendEmail from "../utils/sendEmail.js";
 
 // @route POST /api/v1/auth/signup
 // @desc Signup user
@@ -18,10 +20,35 @@ export const signup = async (req, res, next) => {
       passwordConfirm,
     });
 
-    res.status(201).json({
-      status: "success",
-      newUser,
-    });
+    const verificationToken = newUser.createVerificationToken();
+
+    await newUser.save({ validateBeforeSave: false });
+    const verificationUrl = `${req.protocol}://${req.get(
+      "host"
+    )}/api/v1/auth/verifyAccount/${verificationToken}`;
+
+    const message = `Click this link to verify your account : ${verificationUrl}`;
+
+    try {
+      await sendEmail({
+        email,
+        subject: "Verify your account",
+        message,
+      });
+
+      res.status(201).json({
+        status: "success",
+        newUser,
+        message: `Verification email was sent to:${email} . Please check your email!`,
+      });
+    } catch (error) {
+      newUser.verificationToken = undefined;
+      await newUser.save({ validateBeforeSave: false });
+      return next(
+        new AppError("There was an error sending the email. Try again later!"),
+        500
+      );
+    }
   } catch (error) {
     console.log(error);
     res.status(400).json({
@@ -109,4 +136,38 @@ export const refresh = (req, res, next) => {
       res.json({ accessTokenObj });
     }
   );
+};
+
+// @route POST /api/v1/auth/verifyAccount
+// @desc Email verification
+// @access Public
+
+export const verifyAccount = async (req, res, next) => {
+  try {
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(req.params.token)
+      .digest("hex");
+
+    const user = await User.findOne({
+      verificationToken: hashedToken,
+    });
+    if (!user) {
+      return next(new AppError("Token is invalid or has expired", 400));
+    }
+    user.verified = true;
+    user.verificationToken = undefined;
+
+    await user.save();
+
+    res.status(200).json({
+      status: "success",
+      message: "You account has been verified",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: "failed",
+    });
+  }
 };

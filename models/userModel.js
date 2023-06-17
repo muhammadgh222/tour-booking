@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import validator from "validator";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
 const userSchema = new mongoose.Schema({
   username: {
@@ -28,6 +29,11 @@ const userSchema = new mongoose.Schema({
   googleID: {
     type: String,
   },
+  verified: {
+    type: Boolean,
+    default: false,
+  },
+  verificationToken: String,
 });
 
 userSchema.pre("save", async function (next) {
@@ -47,6 +53,17 @@ userSchema.methods.correctPassword = async function (
   userPassword
 ) {
   return await bcrypt.compare(candidatePassword, userPassword);
+};
+
+userSchema.methods.createVerificationToken = function () {
+  const verificationToken = crypto.randomBytes(32).toString("hex");
+
+  this.verificationToken = crypto
+    .createHash("sha256")
+    .update(verificationToken)
+    .digest("hex");
+
+  return verificationToken;
 };
 
 const User = mongoose.model("user", userSchema);

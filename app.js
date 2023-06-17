@@ -11,6 +11,7 @@ import morgan from "morgan";
 
 // Routes
 import authRoutes from "./routes/authRoutes.js";
+import ErrorHandler from "./utils/ErrorHandler.js";
 
 const app = express();
 
@@ -50,4 +51,6 @@ app.get("/", passport.authenticate("jwt", { session: false }), (req, res) => {
     message: "Hello",
   });
 });
+
+app.use(ErrorHandler);
 export default app;
