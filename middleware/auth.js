@@ -1,6 +1,8 @@
 import passport from "passport";
 import localStrategy from "passport-local";
 import User from "../models/userModel.js";
+import { promisify } from "util";
+import jwt from "jsonwebtoken";
 
 passport.use(
   "local",
@@ -71,8 +73,12 @@ export const checkAuth = async (req, res, next) => {
     });
   }
 
-  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-  const currentUser = await User.findById(decoded.id);
+  const decoded = await promisify(jwt.verify)(
+    token,
+    process.env.JWT_REFRESH_SECRET
+  );
+
+  const currentUser = await User.findById(decoded.sub);
 
   req.user = currentUser;
   next();

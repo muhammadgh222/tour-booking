@@ -6,12 +6,16 @@ import jwt from "jsonwebtoken";
 dotenv.config();
 
 import {
+  changePassword,
+  forgotPassword,
   login,
   refresh,
+  resetPassword,
   signup,
   verifyAccount,
 } from "../controller/authController.js";
 import issueJwt from "../utils/issueJwt.js";
+import { checkAuth } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -55,5 +59,8 @@ router.get(
 );
 
 router.get("/verifyAccount/:token", verifyAccount);
+router.post("/forgotPassword", forgotPassword);
+router.patch("/resetPassword/:token", resetPassword);
+router.patch("/changePassword", checkAuth, changePassword);
 
 export default router;

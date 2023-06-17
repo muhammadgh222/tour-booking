@@ -1,9 +1,11 @@
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import AsyncHandler from "express-async-handler";
 
 import User from "../models/userModel.js";
 import issueJwt from "../utils/issueJwt.js";
 import sendEmail from "../utils/sendEmail.js";
+import AppError from "../utils/AppError.js";
 
 // @route POST /api/v1/auth/signup
 // @desc Signup user
@@ -138,7 +140,7 @@ export const refresh = (req, res, next) => {
   );
 };
 
-// @route POST /api/v1/auth/verifyAccount
+// @route GET /api/v1/auth/verifyAccount
 // @desc Email verification
 // @access Public
 
@@ -171,3 +173,139 @@ export const verifyAccount = async (req, res, next) => {
     });
   }
 };
+
+// PASSWORD RECOVERY FEATURES
+
+// @route POST /api/v1/auth/forgotPassword
+// @desc Password recovery
+// @access Public
+
+export const forgotPassword = AsyncHandler(async (req, res, next) => {
+  const user = await User.findOne({ email: req.body.email });
+
+  if (!user) {
+    return next(new AppError("There is no user with such an email.", 401));
+  }
+
+  const resetToken = user.createPasswordResetToken();
+  await user.save({ validateBeforeSave: false });
+
+  const resetURL = `${req.protocol}://${req.get(
+    "host"
+  )}/api/v1/auth/resetPassword/${resetToken}`;
+
+  const message = `Forgot your password? Submit click the link belowe and provide your new password : ${resetURL} \nIf you didn't forget your password, please ignore this email!`;
+
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: "Your password reset token (valid for 10 min)",
+      message,
+    });
+    res.status(200).json({
+      status: "success",
+      message: "Token sent to email!",
+    });
+  } catch (err) {
+    console.log(err);
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+    return next(
+      new AppError("There was an error sending the email. Try again later!"),
+      500
+    );
+  }
+});
+
+// @route PATCH /api/v1/auth/resetPassword/:token
+// @desc Password reset
+// @access Public
+
+export const resetPassword = AsyncHandler(async (req, res, next) => {
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(req.params.token)
+    .digest("hex");
+
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    return next(new AppError("Token is invalid or has expired", 400));
+  }
+
+  if (!password || !passwordConfirm) {
+    return next(new AppError("Please add and confirm your password", 400));
+  }
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.passwordConfirm;
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+  await user.save();
+
+  const accessTokenObj = issueJwt(user);
+
+  const payload = {
+    sub: user._id,
+    iat: Date.now(),
+  };
+  const refreshTokenObj = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
+    expiresIn: process.env.JWT_EXPIRY,
+  });
+
+  res.cookie("jwt", refreshTokenObj, {
+    expiresIn: new Date(
+      Date.now() + process.env.JWT_EXPIRY * 24 * 60 * 60 * 1000
+    ),
+    httpOnly: true,
+  });
+
+  res.status(200).json({
+    success: true,
+    token: accessTokenObj.token,
+    expiresIn: accessTokenObj.expires,
+  });
+});
+
+// @route PATCH /api/v1/auth/forgotPassword
+// @desc Password recovery
+// @access Public
+
+export const changePassword = AsyncHandler(async (req, res, next) => {
+  const user = await User.findById(req.user.id).select("+password");
+
+  if (!(await user.correctPassword(req.body.passwordCurrent, user.password))) {
+    return next(new AppError("Your current password is wrong.", 401));
+  }
+
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.passwordConfirm;
+
+  await user.save();
+
+  const accessTokenObj = issueJwt(user);
+
+  const payload = {
+    sub: user._id,
+    iat: Date.now(),
+  };
+  const refreshTokenObj = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
+    expiresIn: process.env.JWT_EXPIRY,
+  });
+
+  res.cookie("jwt", refreshTokenObj, {
+    expiresIn: new Date(
+      Date.now() + process.env.JWT_EXPIRY * 24 * 60 * 60 * 1000
+    ),
+    httpOnly: true,
+  });
+
+  res.status(200).json({
+    success: true,
+    token: accessTokenObj.token,
+    expiresIn: accessTokenObj.expires,
+  });
+});
