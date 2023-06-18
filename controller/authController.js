@@ -6,6 +6,7 @@ import User from "../models/userModel.js";
 import issueJwt from "../utils/issueJwt.js";
 import sendEmail from "../utils/sendEmail.js";
 import AppError from "../utils/AppError.js";
+import sendToken from "../utils/sendToken.js";
 
 // @route POST /api/v1/auth/signup
 // @desc Signup user
@@ -85,28 +86,7 @@ export const login = async (req, res, next) => {
 
       //   return next(new AppError("Incorrect email or password", 401));
     }
-    const accessTokenObj = issueJwt(user);
-
-    const payload = {
-      sub: user._id,
-      iat: Date.now(),
-    };
-    const refreshTokenObj = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
-      expiresIn: process.env.JWT_EXPIRY,
-    });
-
-    res.cookie("jwt", refreshTokenObj, {
-      expiresIn: new Date(
-        Date.now() + process.env.JWT_EXPIRY * 24 * 60 * 60 * 1000
-      ),
-      httpOnly: true,
-    });
-
-    res.status(200).json({
-      success: true,
-      token: accessTokenObj.token,
-      expiresIn: accessTokenObj.expires,
-    });
+    sendToken(user, res, 200);
   } catch (error) {
     console.log(error);
     res.status(401).json({ success: false, msg: "Error occured" });
@@ -246,28 +226,7 @@ export const resetPassword = AsyncHandler(async (req, res, next) => {
   user.passwordResetExpires = undefined;
   await user.save();
 
-  const accessTokenObj = issueJwt(user);
-
-  const payload = {
-    sub: user._id,
-    iat: Date.now(),
-  };
-  const refreshTokenObj = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
-    expiresIn: process.env.JWT_EXPIRY,
-  });
-
-  res.cookie("jwt", refreshTokenObj, {
-    expiresIn: new Date(
-      Date.now() + process.env.JWT_EXPIRY * 24 * 60 * 60 * 1000
-    ),
-    httpOnly: true,
-  });
-
-  res.status(200).json({
-    success: true,
-    token: accessTokenObj.token,
-    expiresIn: accessTokenObj.expires,
-  });
+  sendToken(user, res, 200);
 });
 
 // @route PATCH /api/v1/auth/forgotPassword
@@ -286,26 +245,5 @@ export const changePassword = AsyncHandler(async (req, res, next) => {
 
   await user.save();
 
-  const accessTokenObj = issueJwt(user);
-
-  const payload = {
-    sub: user._id,
-    iat: Date.now(),
-  };
-  const refreshTokenObj = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
-    expiresIn: process.env.JWT_EXPIRY,
-  });
-
-  res.cookie("jwt", refreshTokenObj, {
-    expiresIn: new Date(
-      Date.now() + process.env.JWT_EXPIRY * 24 * 60 * 60 * 1000
-    ),
-    httpOnly: true,
-  });
-
-  res.status(200).json({
-    success: true,
-    token: accessTokenObj.token,
-    expiresIn: accessTokenObj.expires,
-  });
+  sendToken(user, res, 200);
 });
