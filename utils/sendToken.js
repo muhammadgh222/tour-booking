@@ -5,10 +5,9 @@ export default (user, res, statusCode) => {
   const accessTokenObj = createAccessToken(user);
 
   const refreshTokenObj = createRefreshToken(user);
-
   res.cookie("jwt", refreshTokenObj, {
     expiresIn: new Date(
-      Date.now() + process.env.JWT_EXPIRY * 24 * 60 * 60 * 1000
+      Date.now() + process.env.JWT_REFRESH_EXPIRY * 24 * 60 * 60 * 1000
     ),
     httpOnly: true,
   });

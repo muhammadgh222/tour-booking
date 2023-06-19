@@ -22,6 +22,6 @@ export const createRefreshToken = (user) => {
   });
 
   return {
-    token: "Bearer " + signedToken,
+    signedToken,
   };
 };

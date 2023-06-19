@@ -55,9 +55,19 @@ router.get(
   }
 );
 
-router.get("/verifyAccount/:token", verifyAccount);
+// PASSWORD AND VERIFICATION
+
+router.get(
+  "/verifyAccount/:token",
+
+  verifyAccount
+);
 router.post("/forgotPassword", forgotPassword);
 router.patch("/resetPassword/:token", resetPassword);
-router.patch("/changePassword", changePassword);
+router.patch(
+  "/changePassword",
+  passport.authenticate("jwt", { session: false }),
+  changePassword
+);
 
 export default router;

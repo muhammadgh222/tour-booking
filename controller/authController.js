@@ -93,7 +93,7 @@ export const refresh = (req, res, next) => {
 
   if (!cookies?.jwt) return next(new AppError("Unauthorized", 401));
 
-  const refreshToken = cookies.jwt;
+  const refreshToken = cookies.jwt.signedToken;
   jwt.verify(
     refreshToken,
     process.env.JWT_REFRESH_SECRET,
