@@ -31,12 +31,6 @@ app.get("/hi", (req, res) => {
 });
 app.get("/dashboard", async (req, res) => {
   try {
-    const token = req.cookies.jwt;
-
-    const decoded = await jwt.verify(token, process.env.JWT_REFRESH_SECRET);
-
-    console.log(decoded);
-
     // Retrieve user data from database using userId
     // ...
 

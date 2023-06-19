@@ -14,16 +14,18 @@ import {
   signup,
   verifyAccount,
 } from "../controller/authController.js";
-import issueJwt from "../utils/issueJwt.js";
-import { checkAuth } from "../middleware/auth.js";
+import { createAccessToken, createRefreshToken } from "../utils/issueJwt.js";
 
 const router = express.Router();
 
+// BASIC AUTHENTICATION
 router.post("/signup", signup);
-
 router.post("/login", login);
+
+// GENERATES ACCESS TOKEN
 router.get("/refresh", refresh);
 
+// GOOGLE AUTHNETICATION
 router.get(
   "/google",
   passport.authenticate("google", { scope: ["profile", "email"] })
@@ -37,30 +39,25 @@ router.get(
     prompt: "consent",
   }),
   (req, res) => {
-    // const accessTokenObj = issueJwt(req.user);
+    const accessTokenObj = createAccessToken(req.user);
 
-    // const payload = {
-    //   sub: req.user._id,
-    //   iat: Date.now(),
-    // };
-    // const refreshTokenObj = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
-    //   expiresIn: process.env.JWT_EXPIRY,
-    // });
-    // console.log(refreshTokenObj);
-    // res.cookie("jwt", refreshTokenObj, {
-    //   expiresIn: new Date(
-    //     Date.now() + process.env.JWT_EXPIRY * 24 * 60 * 60 * 1000
-    //   ),
-    //   httpOnly: true,
-    // });
+    const refreshTokenObj = createRefreshToken(req.user);
+    res.cookie("jwt", refreshTokenObj, {
+      expiresIn: new Date(
+        Date.now() + process.env.JWT_REFRESH_EXPIRY * 24 * 60 * 60 * 1000
+      ),
+      httpOnly: true,
+    });
 
-    res.redirect(`/dashboard`);
+    res.status(200).json({
+      accessTokenObj,
+    });
   }
 );
 
 router.get("/verifyAccount/:token", verifyAccount);
 router.post("/forgotPassword", forgotPassword);
 router.patch("/resetPassword/:token", resetPassword);
-router.patch("/changePassword", checkAuth, changePassword);
+router.patch("/changePassword", changePassword);
 
 export default router;

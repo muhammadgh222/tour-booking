@@ -8,20 +8,20 @@ dotenv.config();
 const JwtStrategy = passportJwt.Strategy;
 const ExtractJwt = passportJwt.ExtractJwt;
 
-const cookieExtractor = (req) => {
-  let token = null;
-  if (req.cookies["jwt"]) {
-    token = req.cookies["jwt"];
-  } else if (req.headers.authorization || req.headers.Authorization) {
-    token = req.headers.authorization
-      ? req.headers.authorization.split(" ")[1]
-      : req.headers.Authorization.split(" ")[1];
-  }
-  return token;
-};
+// const cookieExtractor = (req) => {
+//   let token = null;
+//   if (req.cookies["jwt"]) {
+//     token = req.cookies["jwt"];
+//   } else if (req.headers.authorization || req.headers.Authorization) {
+//     token = req.headers.authorization
+//       ? req.headers.authorization.split(" ")[1]
+//       : req.headers.Authorization.split(" ")[1];
+//   }
+//   return token;
+// };
 const options = {
-  jwtFromRequest: cookieExtractor,
-  secretOrKey: process.env.JWT_REFRESH_SECRET,
+  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+  secretOrKey: process.env.JWT_ACCESS_SECRET,
 };
 
 export default (passport) => {

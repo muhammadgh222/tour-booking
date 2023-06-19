@@ -3,7 +3,7 @@ import crypto from "crypto";
 import AsyncHandler from "express-async-handler";
 
 import User from "../models/userModel.js";
-import issueJwt from "../utils/issueJwt.js";
+import { createAccessToken } from "../utils/issueJwt.js";
 import sendEmail from "../utils/sendEmail.js";
 import AppError from "../utils/AppError.js";
 import sendToken from "../utils/sendToken.js";
@@ -70,21 +70,12 @@ export const login = async (req, res, next) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      res
-        .status(400)
-        .json({ status: "fail", msg: "Please provide email and password!" });
-      next();
-      //   return next(new AppError("Please provide email and password!", 400));
+      return next(new AppError("Please provide email and password!", 400));
     }
     const user = await User.findOne({ email }).select("+password");
 
     if (!user || !(await user.correctPassword(password, user.password))) {
-      res
-        .status(401)
-        .json({ status: "fail", msg: "Incorrect email or password!" });
-      return next();
-
-      //   return next(new AppError("Incorrect email or password", 401));
+      return next(new AppError("Incorrect email or password", 401));
     }
     sendToken(user, res, 200);
   } catch (error) {
@@ -100,20 +91,21 @@ export const login = async (req, res, next) => {
 export const refresh = (req, res, next) => {
   const cookies = req.cookies;
 
-  if (!cookies?.jwt) return res.status(401).json({ message: "Unauthorized" });
+  if (!cookies?.jwt) return next(new AppError("Unauthorized", 401));
+
   const refreshToken = cookies.jwt;
   jwt.verify(
     refreshToken,
     process.env.JWT_REFRESH_SECRET,
     async (err, decoded) => {
-      if (err) return res.status(403).json({ message: "Forbidden" });
+      if (err) return next(new AppError("Forbidden", 401));
 
       const foundUser = await User.findOne({
         _id: decoded.sub,
       }).exec();
-      if (!foundUser) return res.status(401).json({ message: "Unauthorized" });
+      if (!foundUser) return next(new AppError("Unauthorized", 401));
 
-      const accessTokenObj = issueJwt(foundUser);
+      const accessTokenObj = createAccessToken(foundUser);
 
       res.json({ accessTokenObj });
     }

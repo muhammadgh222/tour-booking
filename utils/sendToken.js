@@ -1,16 +1,10 @@
 import jwt from "jsonwebtoken";
-import issueJwt from "./issueJwt.js";
+import { createAccessToken, createRefreshToken } from "./issueJwt.js";
 
 export default (user, res, statusCode) => {
-  const accessTokenObj = issueJwt(user);
+  const accessTokenObj = createAccessToken(user);
 
-  const payload = {
-    sub: user._id,
-    iat: Date.now(),
-  };
-  const refreshTokenObj = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
-    expiresIn: process.env.JWT_EXPIRY,
-  });
+  const refreshTokenObj = createRefreshToken(user);
 
   res.cookie("jwt", refreshTokenObj, {
     expiresIn: new Date(
@@ -22,6 +16,5 @@ export default (user, res, statusCode) => {
   res.status(statusCode).json({
     success: true,
     token: accessTokenObj.token,
-    expiresIn: accessTokenObj.expires,
   });
 };
