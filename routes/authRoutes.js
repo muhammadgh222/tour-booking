@@ -15,6 +15,11 @@ import {
   verifyAccount,
 } from "../controller/authController.js";
 import { createAccessToken, createRefreshToken } from "../utils/issueJwt.js";
+import {
+  getProfile,
+  getUser,
+  updateProfile,
+} from "../controller/userController.js";
 
 const router = express.Router();
 
@@ -68,6 +73,20 @@ router.patch(
   "/changePassword",
   passport.authenticate("jwt", { session: false }),
   changePassword
+);
+
+// PROFILE PRIVILIGES
+
+router.get(
+  "/me",
+  passport.authenticate("jwt", { session: false }),
+  getProfile,
+  getUser
+);
+router.patch(
+  "/updateMe",
+  passport.authenticate("jwt", { session: false }),
+  updateProfile
 );
 
 export default router;
