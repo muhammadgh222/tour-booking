@@ -4,6 +4,9 @@ import passport from "passport";
 import cookieParser from "cookie-parser";
 import myPassport, { googleAuth } from "./config/passport.js";
 import jwt from "jsonwebtoken";
+import tourRoutes from "./routes/tourRoutes.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
+
 myPassport(passport);
 googleAuth();
 // Development dependencies
@@ -23,6 +26,8 @@ app.use(cookieParser());
 app.use(passport.initialize());
 
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/tours", tourRoutes);
+app.use("/api/v1/reviews", reviewRoutes);
 
 app.get("/hi", (req, res) => {
   res.send({
